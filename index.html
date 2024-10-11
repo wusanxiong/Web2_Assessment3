@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fundraising Platform</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #fff5f5;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+
+      nav {
+        background-color: #c62828;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      nav h1 {
+        color: white;
+        font-size: 26px;
+        margin: 0;
+        display: inline-block;
+      }
+
+      nav ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: inline-block;
+      }
+
+      nav ul li {
+        display: inline;
+        margin-left: 20px;
+      }
+
+      nav ul li a {
+        color: white;
+        text-decoration: none;
+        font-size: 18px;
+        padding: 10px 15px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+      }
+
+      nav ul li a:hover {
+        background-color: #b71c1c;
+      }
+
+      main {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 20px;
+      }
+
+      h2 {
+        color: #d32f2f;
+        font-size: 34px;
+        margin-bottom: 25px;
+      }
+
+      section p {
+        font-size: 18px;
+        line-height: 1.7;
+        color: #555;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        margin-top: 30px;
+      }
+
+      @media (min-width: 600px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (min-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+      }
+
+      .card {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 16px rgba(0, 0, 0, 0.15);
+      }
+
+      .card h3 {
+        color: #e53935;
+        font-size: 22px;
+        margin-bottom: 15px;
+      }
+
+      .card p {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 15px;
+      }
+
+      .card a {
+        color: #b71c1c;
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.3s ease;
+      }
+
+      .card a:hover {
+        color: #d32f2f;
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="container">
+        <h1>Fundraising Platform</h1>
+        <ul>
+          <li>
+            <a href="#">Home</a>
+          </li>
+          <li>
+            <a href="search.html">Search Fundraisers</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <main>
+      <section class="text-center">
+        <h2>Welcome to Our Fundraising Platform</h2>
+        <p>
+          Our mission is to help people raise funds for their needs. Whether
+          it’s for a medical emergency, educational expenses, or social causes,
+          we are here to help.
+        </p>
+      </section>
+
+      <section>
+        <h2>Active Fundraisers</h2>
+        <div id="fundraisersList" class="grid"></div>
+      </section>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async function () {
+        const fundraisersList = document.getElementById("fundraisersList");
+
+        try {
+          const response = await fetch("http://localhost:3000/fundraisers");
+          const data = await response.json();
+
+          fundraisersList.innerHTML = "";
+
+          data.forEach((fundraiser) => {
+            const fundraiserCard = `
+              <div class="card">
+                <h3>${fundraiser.title}</h3>
+                <p><strong>Organizer:</strong> ${fundraiser.organizer}</p>
+                <p><strong>City:</strong> ${fundraiser.city}</p>
+                <p><strong>Target Funding:</strong> $${fundraiser.target_funding}</p>
+                <p><strong>Current Funding:</strong> $${fundraiser.current_funding}</p>
+                <a href="fundraiser-detail.html?id=${fundraiser.fundraiser_id}">View Details</a>
+              </div>
+            `;
+            fundraisersList.innerHTML += fundraiserCard;
+          });
+        } catch (error) {
+          console.error("Error fetching fundraisers:", error);
+        }
+      });
+    </script>
+  </body>
+</html>
