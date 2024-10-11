@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Make a Donation</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #fff5f5;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+
+      main {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      h2 {
+        color: #d32f2f;
+        font-size: 28px;
+        margin-bottom: 20px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+
+      button {
+        background-color: #e53935;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #b71c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h2>Donate to <span id="fundraiserTitle"></span></h2>
+      <p id="fundraiserDetails"></p>
+      <form id="donationForm">
+        <label for="giver">Your Name</label>
+        <input type="text" id="giver" name="giver" required />
+
+        <label for="amount">Donation Amount (AUD)</label>
+        <input type="number" id="amount" name="amount" min="5" required />
+
+        <button type="submit">Submit my donation</button>
+      </form>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async function () {
+        const fundraiserId = new URLSearchParams(window.location.search).get(
+          "fundraiser_id"
+        );
+        const fundraiserTitleElement =
+          document.getElementById("fundraiserTitle");
+        const fundraiserDetailsElement =
+          document.getElementById("fundraiserDetails");
+        const donationForm = document.getElementById("donationForm");
+
+        if (!fundraiserId) {
+          alert("Invalid Fundraiser ID.");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `http://localhost:3000/fundraiser/${fundraiserId}`
+          );
+          const fundraiser = await response.json();
+
+          fundraiserTitleElement.textContent = fundraiser.title;
+          fundraiserDetailsElement.innerHTML = `
+            <p><strong>Organizer:</strong> ${fundraiser.organizer}</p>
+            <p><strong>City:</strong> ${fundraiser.city}</p>
+          `;
+
+          donationForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const giver = document.getElementById("giver").value;
+            const amount = parseFloat(document.getElementById("amount").value);
+
+            if (amount < 5) {
+              alert("The minimum donation is 5 AUD.");
+              return;
+            }
+
+            try {
+              const donationResponse = await fetch(
+                "http://localhost:3000/donation",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    date: new Date().toISOString().split("T")[0],
+                    amount: amount,
+                    giver: giver,
+                    fundraiser_id: fundraiserId,
+                  }),
+                }
+              );
+
+              if (donationResponse.ok) {
+                alert(`Thank you for your donation to ${fundraiser.title}`);
+                window.location.href = `fundraiser-detail.html?id=${fundraiserId}`;
+              } else {
+                alert("Error submitting donation.");
+              }
+            } catch (error) {
+              console.error("Error submitting donation:", error);
+              alert("Error submitting donation.");
+            }
+          });
+        } catch (error) {
+          console.error("Error fetching fundraiser details:", error);
+          alert("Error loading fundraiser details.");
+        }
+      });
+    </script>
+  </body>
+</html>
