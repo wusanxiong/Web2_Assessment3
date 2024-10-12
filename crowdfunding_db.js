@@ -4,6 +4,7 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors());
+app.use(express.json()); 
 
 const db = mysql.createConnection({
   host: '127.0.0.1',     
@@ -69,6 +70,86 @@ app.get('/search', (req, res) => {
     });
 });
   
+app.get('/fundraiser/:id', (req, res) => {
+  const fundraiserId = req.params.id;
+  const query = `
+    SELECT f.*, d.donation_id, d.date, d.amount, d.giver
+    FROM fundraisers f
+    LEFT JOIN donation d ON f.fundraiser_id = d.fundraiser_id
+    WHERE f.fundraiser_id = ?
+  `;
+  
+  db.query(query, [fundraiserId], (err, results) => {
+    if (err) return res.status(500).send('Database query error');
+    if (!results.length) return res.status(404).send('Fundraiser not found');
+    
+    const fundraiser = {
+      ...results[0],
+      donations: results.map(row => ({
+        donation_id: row.donation_id,
+        date: row.date,
+        amount: row.amount,
+        giver: row.giver
+      })).filter(donation => donation.donation_id !== null)
+    };
+    
+    res.json(fundraiser);
+  });
+});
+
+app.post('/donation', (req, res) => {
+  const { date, amount, giver, fundraiser_id } = req.body;
+  const query = 'INSERT INTO donation (date, amount, giver, fundraiser_id) VALUES (?, ?, ?, ?)';
+  
+  db.query(query, [date, amount, giver, fundraiser_id], (err, result) => {
+    if (err) return res.status(500).send('Database insertion error');
+    res.status(201).send(`Donation added with ID: ${result.insertId}`);
+  });
+});
+
+app.post('/fundraiser', (req, res) => {
+  const { organizer, title, target_funding, city, category_id } = req.body;
+  const query = 'INSERT INTO fundraisers (organizer, title, target_funding, city, category_id) VALUES (?, ?, ?, ?, ?)';
+  
+  db.query(query, [organizer, title, target_funding, city, category_id], (err, result) => {
+    if (err) return res.status(500).send('Database insertion error');
+    res.status(201).send(`Fundraiser added with ID: ${result.insertId}`);
+  });
+});
+
+app.put('/fundraiser/:id', (req, res) => {
+  const fundraiserId = req.params.id;
+  const { update_organizer, update_title, update_target_funding, update_city, update_category_id } = req.body;
+  const query = 'UPDATE fundraisers SET organizer = ?, title = ?, target_funding = ?, city = ?, category_id = ? WHERE fundraiser_id = ?';
+  
+  db.query(query, [update_organizer, update_title, update_target_funding, update_city, update_category_id, fundraiserId], (err, result) => {
+    if (err) {
+      console.error('Database update error:', err); 
+      return res.status(500).send('Database update error');
+    }
+    if (result.affectedRows === 0) return res.status(404).send('Fundraiser not found');
+    res.send('Fundraiser updated successfully');
+  });
+});
+
+
+app.delete('/fundraiser/:id', (req, res) => {
+  const fundraiserId = req.params.id;
+  const checkQuery = 'SELECT COUNT(*) AS donationCount FROM donation WHERE fundraiser_id = ?';
+  
+  db.query(checkQuery, [fundraiserId], (err, results) => {
+    if (err) return res.status(500).send('Database query error');
+    if (results[0].donationCount > 0) return res.status(400).send('Cannot delete fundraiser with donations');
+    
+    const deleteQuery = 'DELETE FROM fundraisers WHERE fundraiser_id = ?';
+    db.query(deleteQuery, [fundraiserId], (err, result) => {
+      if (err) return res.status(500).send('Database deletion error');
+      if (result.affectedRows === 0) return res.status(404).send('Fundraiser not found');
+      res.send('Fundraiser deleted successfully');
+    });
+  });
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
