@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Fundraising Platform</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f0f0f0;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+
+      main {
+        max-width: 1600px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      }
+
+      h2 {
+        color: #d32f2f;
+        font-size: 28px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e53935;
+        padding-bottom: 10px;
+      }
+
+      form {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+
+      button {
+        background-color: #e53935;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #b71c1c;
+      }
+
+      .fundraiser {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .fundraiser p {
+        margin: 5px 0;
+      }
+
+      .delete-button {
+        color: #e53935;
+        cursor: pointer;
+        text-decoration: underline;
+        font-weight: bold;
+      }
+
+      .delete-button:hover {
+        color: #b71c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h2>Fundraisers</h2>
+      <div id="fundraisersList"></div>
+
+      <h2>Add New Fundraiser</h2>
+      <form id="addFundraiserForm">
+        <label for="organizer">Organizer</label>
+        <input type="text" id="organizer" name="organizer" required />
+
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required />
+
+        <label for="target_funding">Target Funding</label>
+        <input
+          type="number"
+          id="target_funding"
+          name="target_funding"
+          required
+        />
+
+        <label for="city">City</label>
+        <input type="text" id="city" name="city" required />
+
+        <label for="category_id">Category ID</label>
+        <input type="number" id="category_id" name="category_id" required />
+
+        <button type="submit">Save</button>
+      </form>
+
+      <h2>Update Fundraiser</h2>
+      <form id="updateFundraiserForm">
+        <label for="fundraiser_id">Fundraiser ID</label>
+        <input type="number" id="fundraiser_id" name="fundraiser_id" required />
+
+        <label for="update_organizer">Organizer</label>
+        <input
+          type="text"
+          id="update_organizer"
+          name="update_organizer"
+          required
+        />
+
+        <label for="update_title">Title</label>
+        <input type="text" id="update_title" name="update_title" required />
+
+        <label for="update_target_funding">Target Funding</label>
+        <input
+          type="number"
+          id="update_target_funding"
+          name="update_target_funding"
+          required
+        />
+
+        <label for="update_city">City</label>
+        <input type="text" id="update_city" name="update_city" required />
+
+        <label for="update_category_id">Category ID</label>
+        <input
+          type="number"
+          id="update_category_id"
+          name="update_category_id"
+          required
+        />
+
+        <button type="submit">Save</button>
+      </form>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async function () {
+        const fundraisersList = document.getElementById("fundraisersList");
+        const addFundraiserForm = document.getElementById("addFundraiserForm");
+        const updateFundraiserForm = document.getElementById(
+          "updateFundraiserForm"
+        );
+
+        async function fetchFundraisers() {
+          try {
+            const response = await fetch("http://localhost:3000/fundraisers");
+            const fundraisers = await response.json();
+            fundraisersList.innerHTML = fundraisers
+              .map(
+                (fundraiser) => `
+              <div class="fundraiser">
+                <p><strong>ID:</strong> ${fundraiser.fundraiser_id}</p>
+                <p><strong>Title:</strong> ${fundraiser.title}</p>
+                <p><strong>Organizer:</strong> ${fundraiser.organizer}</p>
+                <p><strong>City:</strong> ${fundraiser.city}</p>
+                <p><strong>Target Funding:</strong> $${fundraiser.target_funding}</p>
+                <span class="delete-button" data-id="${fundraiser.fundraiser_id}">Delete</span>
+              </div>
+            `
+              )
+              .join("");
+          } catch (error) {
+            console.error("Error fetching fundraisers:", error);
+          }
+        }
+
+        addFundraiserForm.addEventListener("submit", async function (event) {
+          event.preventDefault();
+          const formData = new FormData(addFundraiserForm);
+          const data = Object.fromEntries(formData.entries());
+
+          try {
+            const response = await fetch("http://localhost:3000/fundraiser", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+              alert("Fundraiser added successfully!");
+              fetchFundraisers();
+              addFundraiserForm.reset();
+            } else {
+              alert("Error adding fundraiser.");
+            }
+          } catch (error) {
+            console.error("Error adding fundraiser:", error);
+          }
+        });
+
+        updateFundraiserForm.addEventListener("submit", async function (event) {
+          event.preventDefault();
+          const formData = new FormData(updateFundraiserForm);
+          const data = Object.fromEntries(formData.entries());
+          const fundraiserId = data.fundraiser_id;
+          delete data.fundraiser_id;
+
+          try {
+            const response = await fetch(
+              `http://localhost:3000/fundraiser/${fundraiserId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+              }
+            );
+
+            if (response.ok) {
+              alert("Fundraiser updated successfully!");
+              fetchFundraisers();
+              updateFundraiserForm.reset();
+            } else {
+              alert("Error updating fundraiser.");
+            }
+          } catch (error) {
+            console.error("Error updating fundraiser:", error);
+          }
+        });
+
+        fundraisersList.addEventListener("click", async function (event) {
+          if (event.target.classList.contains("delete-button")) {
+            const fundraiserId = event.target.getAttribute("data-id");
+
+            try {
+              const response = await fetch(
+                `http://localhost:3000/fundraiser/${fundraiserId}`,
+                {
+                  method: "DELETE",
+                }
+              );
+
+              if (response.ok) {
+                alert("Fundraiser deleted successfully!");
+                fetchFundraisers();
+              } else {
+                alert("Error deleting fundraiser.");
+              }
+            } catch (error) {
+              console.error("Error deleting fundraiser:", error);
+            }
+          }
+        });
+
+        fetchFundraisers();
+      });
+    </script>
+  </body>
+</html>

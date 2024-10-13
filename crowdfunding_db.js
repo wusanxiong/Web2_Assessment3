@@ -132,7 +132,6 @@ app.put('/fundraiser/:id', (req, res) => {
   });
 });
 
-
 app.delete('/fundraiser/:id', (req, res) => {
   const fundraiserId = req.params.id;
   const checkQuery = 'SELECT COUNT(*) AS donationCount FROM donation WHERE fundraiser_id = ?';
